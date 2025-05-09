@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Hoiupõrsa mäng</title>
+<link rel="stylesheet" href="page.css" type="text/css">
+</head>
+<body>
+
+<h1>Hoiupõrsa mäng</h1>
+<p>Kogu münte ja osta uuendusi!</p>
+
+<div class="game-container">
+    <canvas id="the-game"></canvas>
+</div>
+
+<div id="shop">
+    <h2>Pood</h2>
+    <div class="shop-grid">
+        <div class="shop-item">
+            <h3>Kiirus</h3>
+            <p>Level: <span id="speedLevel">1</span>/10</p>
+            <button onclick="game.shop.speedUpgrade.buy()">
+                Osta (<span id="speedCost">50</span> münti)
+            </button>
+        </div>
+        
+        <div class="shop-item">
+            <h3>Mündi väärtus</h3>
+            <p>Level: <span id="coinLevel">1</span>/10</p>
+            <button onclick="game.shop.coinValueUpgrade.buy()">
+                Osta (<span id="coinCost">100</span> münti)
+            </button>
+        </div>
+        
+        <div class="shop-item">
+            <h3>Põrsa suurus</h3>
+            <p>Level: <span id="pigLevel">1</span>/5</p>
+            <button onclick="game.shop.pigSizeUpgrade.buy()">
+                Osta (<span id="pigCost">150</span> münti)
+            </button>
+        </div>
+        
+        <div class="shop-item">
+            <h3>Õnn</h3>
+            <p>Level: <span id="luckLevel">1</span>/5</p>
+            <button onclick="game.shop.luckUpgrade.buy()">
+                Osta (<span id="luckCost">200</span> münti)
+            </button>
+        </div>
+    </div>
+    
+    <div class="money-display">
+        <h3>Raha: <span id="moneyDisplay">0</span></h3>
+    </div>
+</div>
+
+<div class="instructions">
+    <p>Juhi põrsast nooleklahvide, WASD või HJKL klahvidega.</p>
+    <p>Kogu erinevaid münte:</p>
+    <ul>
+        <li>Kuldmünt (10)</li>
+        <li>Hõbemünt (25)</li>
+        <li>Plaatinamünt (50)</li>
+        <li>Smaragdmünt (100)</li>
+    </ul>
+</div>
+
+<script type="text/javascript" src="game.js"></script>
+</body>
+</html>
