@@ -1,71 +1,205 @@
 <!DOCTYPE html>
-<html>
+<html lang="et">
 <head>
-<meta charset="utf-8" />
-<title>Hoiupõrsa mäng</title>
-<link rel="stylesheet" href="page.css" type="text/css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hoiupõrsa Seiklus</title>
+    <link rel="stylesheet" href="page.css">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta name="description" content="Hoiupõrsa seiklusmäng - kogu münte, arenda oma põrsast ja saavuta uusi rekordeid!">
 </head>
 <body>
+    <div class="game-wrapper">
+        <!-- Left Panel -->
+        <div class="left-panel">
+            <!-- Achievements Section -->
+            <div class="achievements-container panel-section">
+                <h2 class="section-title">🏆 Saavutused</h2>
+                <div id="achievements-list" class="achievements-grid">
+                    <!-- Achievements will be added dynamically -->
+                </div>
+            </div>
 
-<h1>Hoiupõrsa mäng</h1>
-<p>Kogu münte ja osta uuendusi!</p>
+            <!-- Statistics Section -->
+            <div class="statistics-container panel-section">
+                <h2 class="section-title">📊 Statistika</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">🎯 Rekord:</span>
+                        <span id="highScore" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">💰 Kogutud münte:</span>
+                        <span id="totalCoins" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">🎮 Mängitud mänge:</span>
+                        <span id="gamesPlayed" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">✨ Rebirth korrutaja:</span>
+                        <span id="rebirthMultiplier" class="stat-value">1.0</span>x
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<div class="game-container">
-    <canvas id="the-game"></canvas>
-</div>
+        <!-- Center Panel -->
+        <div class="center-panel">
+            <header class="game-header">
+                <h1>🐷 Hoiupõrsa Seiklus</h1>
+                <p class="game-subtitle">Kogu münte ja arenda oma põrsast!</p>
+            </header>
 
-<div id="shop">
-    <h2>Pood</h2>
-    <div class="shop-grid">
-        <div class="shop-item">
-            <h3>Kiirus</h3>
-            <p>Level: <span id="speedLevel">1</span>/10</p>
-            <button onclick="game.shop.speedUpgrade.buy()">
-                Osta (<span id="speedCost">50</span> münti)
-            </button>
+            <div class="game-container">
+                <canvas id="the-game"></canvas>
+                <div id="game-overlay" class="game-overlay hidden">
+                    <div id="game-message"></div>
+                    <button id="restart-button" class="hidden">Alusta uuesti</button>
+                </div>
+            </div>
+
+            <div id="powerup-status" class="powerup-status"></div>
         </div>
-        
-        <div class="shop-item">
-            <h3>Mündi väärtus</h3>
-            <p>Level: <span id="coinLevel">1</span>/10</p>
-            <button onclick="game.shop.coinValueUpgrade.buy()">
-                Osta (<span id="coinCost">100</span> münti)
-            </button>
-        </div>
-        
-        <div class="shop-item">
-            <h3>Põrsa suurus</h3>
-            <p>Level: <span id="pigLevel">1</span>/5</p>
-            <button onclick="game.shop.pigSizeUpgrade.buy()">
-                Osta (<span id="pigCost">150</span> münti)
-            </button>
-        </div>
-        
-        <div class="shop-item">
-            <h3>Õnn</h3>
-            <p>Level: <span id="luckLevel">1</span>/5</p>
-            <button onclick="game.shop.luckUpgrade.buy()">
-                Osta (<span id="luckCost">200</span> münti)
-            </button>
+
+        <!-- Right Panel -->
+        <div class="right-panel">
+            <div id="shop" class="shop-container panel-section">
+                <h2 class="section-title">🛍️ Pood</h2>
+                
+                <!-- Money Display -->
+                <div class="money-display">
+                    <h3>💰 Raha: <span id="moneyDisplay" class="money-amount">0</span></h3>
+                </div>
+
+                <!-- Pig Colors Section -->
+                <div class="shop-section">
+                    <h3 class="subsection-title">🎨 Põrsa värvid</h3>
+                    <div id="pigColorShop" class="color-shop-grid">
+                        <!-- Colors will be added dynamically -->
+                    </div>
+                </div>
+
+                <!-- Upgrades Section -->
+                <div class="shop-grid">
+                    <!-- Speed Upgrade -->
+                    <div class="shop-item">
+                        <h3>⚡ Kiirus</h3>
+                        <div class="upgrade-info">
+                            <p>Level: <span id="speedUpgradeLevel">1</span>/10</p>
+                            <button onclick="game.shop.speedUpgrade.buy()" class="upgrade-button">
+                                Osta (<span id="speedUpgradeCost">50</span>)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Coin Value Upgrade -->
+                    <div class="shop-item">
+                        <h3>💎 Mündi väärtus</h3>
+                        <div class="upgrade-info">
+                            <p>Level: <span id="coinValueUpgradeLevel">1</span>/10</p>
+                            <button onclick="game.shop.coinValueUpgrade.buy()" class="upgrade-button">
+                                Osta (<span id="coinValueUpgradeCost">100</span>)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Pig Size Upgrade -->
+                    <div class="shop-item">
+                        <h3>🐽 Põrsa suurus</h3>
+                        <div class="upgrade-info">
+                            <p>Level: <span id="pigSizeUpgradeLevel">1</span>/5</p>
+                            <button onclick="game.shop.pigSizeUpgrade.buy()" class="upgrade-button">
+                                Osta (<span id="pigSizeUpgradeCost">150</span>)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Luck Upgrade -->
+                    <div class="shop-item">
+                        <h3>🍀 Õnn</h3>
+                        <div class="upgrade-info">
+                            <p>Level: <span id="luckUpgradeLevel">1</span>/5</p>
+                            <button onclick="game.shop.luckUpgrade.buy()" class="upgrade-button">
+                                Osta (<span id="luckUpgradeCost">200</span>)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Magnet Upgrade -->
+                    <div class="shop-item">
+                        <h3>🧲 Magnet</h3>
+                        <div class="upgrade-info">
+                            <p>Level: <span id="magnetUpgradeLevel">1</span>/5</p>
+                            <button onclick="game.shop.magnetUpgrade.buy()" class="upgrade-button">
+                                Osta (<span id="magnetUpgradeCost">300</span>)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Multiplier Upgrade -->
+                    <div class="shop-item">
+                        <h3>✨ Korrutaja</h3>
+                        <div class="upgrade-info">
+                            <p>Level: <span id="multiplierUpgradeLevel">1</span>/3</p>
+                            <button onclick="game.shop.multiplierUpgrade.buy()" class="upgrade-button">
+                                Osta (<span id="multiplierUpgradeCost">500</span>)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rebirth Section -->
+                <div class="rebirth-section">
+                    <h3>🔄 Rebirth</h3>
+                    <p>Alusta uuesti suurema korrutajaga!</p>
+                    <button onclick="game.rebirth()" class="rebirth-button">
+                        Rebirth (<span id="rebirthCost">10000</span>)
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
-    
-    <div class="money-display">
-        <h3>Raha: <span id="moneyDisplay">0</span></h3>
+
+    <!-- Instructions Section -->
+    <div class="instructions panel-section">
+        <h2 class="section-title">📖 Mängujuhend</h2>
+        <div class="instructions-grid">
+            <div class="instruction-section">
+                <h3>🎮 Juhtimine</h3>
+                <p>Liiguta põrsast:</p>
+                <ul>
+                    <li>↑↓←→ Nooleklahvid</li>
+                    <li>WASD klahvid</li>
+                    <li>K - Alusta uuesti</li>
+                </ul>
+            </div>
+
+            <div class="instruction-section">
+                <h3>💰 Mündid</h3>
+                <ul>
+                    <li>🟡 Kuldmünt (10) - Tavaline</li>
+                    <li>⚪ Hõbemünt (25) - Haruldane</li>
+                    <li>💠 Plaatinamünt (50) - Väga haruldane</li>
+                    <li>💚 Smaragdmünt (100) - Ülimalt haruldane</li>
+                </ul>
+            </div>
+
+            <div class="instruction-section">
+                <h3>⚡ Uuendused</h3>
+                <ul>
+                    <li>⚡ Kiirus - Suurendab põrsa liikumiskiirust</li>
+                    <li>💎 Mündi väärtus - Suurendab kogutavate müntide väärtust</li>
+                    <li>🐽 Põrsa suurus - Teeb põrsa suuremaks</li>
+                    <li>🍀 Õnn - Suurendab haruldaste müntide ilmumise tõenäosust</li>
+                    <li>🧲 Magnet - Tõmbab münte põrsa poole</li>
+                    <li>✨ Korrutaja - Suurendab kõiki teenitud münte</li>
+                </ul>
+            </div>
+        </div>
     </div>
-</div>
 
-<div class="instructions">
-    <p>Juhi põrsast nooleklahvide, WASD või HJKL klahvidega.</p>
-    <p>Kogu erinevaid münte:</p>
-    <ul>
-        <li>Kuldmünt (10)</li>
-        <li>Hõbemünt (25)</li>
-        <li>Plaatinamünt (50)</li>
-        <li>Smaragdmünt (100)</li>
-    </ul>
-</div>
-
-<script type="text/javascript" src="game.js"></script>
+    <!-- Scripts -->
+    <script src="game.js"></script>
 </body>
 </html>
