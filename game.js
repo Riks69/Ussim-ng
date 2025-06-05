@@ -4,7 +4,7 @@ canvas.height = 600;
 var context = canvas.getContext("2d");
 var game, snake, food;
 
-window.onload = function() {
+window.onload = function () {
     loadGame();
     game.start();
 };
@@ -13,20 +13,15 @@ function loadGame() {
     let savedData = localStorage.getItem('piggyGameSave');
     if (savedData) {
         let data = JSON.parse(savedData);
-        game.money = data.money || 0;
-        game.totalCoins = data.totalCoins || 0;
-        game.highScore = data.highScore || 0;
-        game.upgrades = data.upgrades || {
-            speed: 0,
-            coinValue: 0,
-            pigSize: 0,
-            luckLevel: 0,
-            magnetLevel: 0,
-            multiplierLevel: 0
-        };
-        game.achievements = data.achievements || game.achievements;
-        game.selectedPigColor = data.selectedPigColor || '#FFC0CB';
-        game.unlockedColors = data.unlockedColors || ['#FFC0CB'];
+        Object.assign(game, {
+            money: data.money || 0,
+            totalCoins: data.totalCoins || 0,
+            highScore: data.highScore || 0,
+            upgrades: data.upgrades || game.upgrades,
+            achievements: data.achievements || game.achievements,
+            selectedPigColor: data.selectedPigColor || '#FFC0CB',
+            unlockedColors: data.unlockedColors || ['#FFC0CB']
+        });
     }
 }
 
@@ -41,6 +36,19 @@ function saveGame() {
         unlockedColors: game.unlockedColors
     };
     localStorage.setItem('piggyGameSave', JSON.stringify(saveData));
+}
+
+function updateShopDisplay() {
+    // Lihtsustatud placeholder; vajadusel lisa DOM-i uuendused
+    console.log("Pood uuendatud: ", game.upgrades, game.money);
+}
+
+function updateStatistics() {
+    try {
+        console.log("Statistika uuendatud: ", game.score, game.highScore, game.totalCoins);
+    } catch (error) {
+        console.log("Statistics update error:", error);
+    }
 }
 
 game = {
@@ -87,114 +95,90 @@ game = {
         ],
 
         check: function() {
-            this.coins.forEach(achievement => {
-                if (!achievement.achieved && game.totalCoins >= achievement.requirement) {
-                    achievement.achieved = true;
-                    this.unlock(achievement);
-                }
-            });
+            try {
+                this.coins.forEach(achievement => {
+                    if (!achievement.achieved && game.totalCoins >= achievement.requirement) {
+                        achievement.achieved = true;
+                        this.unlock(achievement);
+                    }
+                });
 
-            this.score.forEach(achievement => {
-                if (!achievement.achieved && game.score >= achievement.requirement) {
-                    achievement.achieved = true;
-                    this.unlock(achievement);
-                }
-            });
-            saveGame();
+                this.score.forEach(achievement => {
+                    if (!achievement.achieved && game.score >= achievement.requirement) {
+                        achievement.achieved = true;
+                        this.unlock(achievement);
+                    }
+                });
+            } catch (error) {
+                console.log("Achievement check error:", error);
+            }
         },
 
         unlock: function(achievement) {
-            game.money += achievement.reward * game.rebirthMultiplier;
-
-            const notification = document.createElement('div');
-            notification.className = 'achievement-notification';
-            notification.innerHTML = `🏆 Saavutus avatud: ${achievement.name}<br>+${achievement.reward * game.rebirthMultiplier} münti!`;
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
-
-            const achievementsList = document.getElementById('achievements-list');
-            if (achievementsList) {
-                const achievementElement = document.createElement('div');
-                achievementElement.className = 'achievement';
-                achievementElement.innerHTML =
-                    `<span class="achievement-name">${achievement.name}</span>
-                    <span class="achievement-icon">🏆</span>`;
-                achievementsList.appendChild(achievementElement);
+            try {
+                game.money += achievement.reward * game.rebirthMultiplier;
+                console.log(`Saavutus avatud: ${achievement.name}`);
+            } catch (error) {
+                console.log("Achievement unlock error:", error);
             }
         }
     },
 
-    createCoinParticles: function(x, y) {
+    createCoinParticles: function (x, y) {
         for (let i = 0; i < 8; i++) {
-            let particle = {
-                x: x,
-                y: y,
+            let p = {
+                x, y,
                 dx: (Math.random() - 0.5) * 10,
                 dy: (Math.random() - 0.5) * 10,
                 alpha: 1
             };
-            
-            let drawParticle = function() {
-                if (particle.alpha <= 0) return;
-                context.fillStyle = `rgba(255, 215, 0, ${particle.alpha})`;
+
+            const draw = () => {
+                if (p.alpha <= 0) return;
+                context.fillStyle = `rgba(255,215,0,${p.alpha})`;
                 context.beginPath();
-                context.arc(particle.x, particle.y, 3, 0, Math.PI * 2);
+                context.arc(p.x, p.y, 3, 0, Math.PI * 2);
                 context.fill();
-                
-                particle.x += particle.dx;
-                particle.y += particle.dy;
-                particle.alpha -= 0.05;
-                
-                if (particle.alpha > 0) {
-                    requestAnimationFrame(drawParticle);
-                }
+                p.x += p.dx;
+                p.y += p.dy;
+                p.alpha -= 0.05;
+                requestAnimationFrame(draw);
             };
-            
-            drawParticle();
+            draw();
         }
     },
 
-    rebirth: function() {
+    rebirth: function () {
         if (game.money >= game.rebirthCost) {
             game.rebirthMultiplier += 0.5;
             game.money = 0;
-            game.upgrades = {
-                speed: 0,
-                coinValue: 0,
-                pigSize: 0,
-                luckLevel: 0,
-                magnetLevel: 0,
-                multiplierLevel: 0
-            };
+            game.upgrades = { speed: 0, coinValue: 0, pigSize: 0, luckLevel: 0, magnetLevel: 0, multiplierLevel: 0 };
             game.rebirthCost *= 2;
             updateShopDisplay();
             saveGame();
         }
     },
 
-    buyPigColor: function(colorKey) {
-        let colorData = this.pigColors[colorKey];
-        if (colorData && !this.unlockedColors.includes(colorData.color) && game.money >= colorData.cost) {
-            game.money -= colorData.cost;
-            this.unlockedColors.push(colorData.color);
+    buyPigColor(colorKey) {
+        let color = this.pigColors[colorKey];
+        if (color && !this.unlockedColors.includes(color.color) && game.money >= color.cost) {
+            game.money -= color.cost;
+            this.unlockedColors.push(color.color);
             updateShopDisplay();
             saveGame();
         }
     },
 
-    setPigColor: function(colorKey) {
-        let colorData = this.pigColors[colorKey];
-        if (colorData && this.unlockedColors.includes(colorData.color)) {
-            this.selectedPigColor = colorData.color;
-            snake.color = colorData.color;
+    setPigColor(colorKey) {
+        let color = this.pigColors[colorKey];
+        if (color && this.unlockedColors.includes(color.color)) {
+            this.selectedPigColor = color.color;
+            snake.color = color.color;
             saveGame();
         }
     },
 
-    start: function() {
+    start: function () {
         game.over = false;
         game.message = null;
         game.score = 0;
@@ -207,7 +191,7 @@ game = {
         updateStatistics();
     },
 
-    stop: function() {
+    stop: function () {
         game.over = true;
         game.message = 'MÄNG LÄBI - VAJUTA K';
         if (game.score > game.highScore) {
@@ -221,7 +205,9 @@ game = {
         if (!game.over) {
             game.resetCanvas();
             snake.move();
-            food.draw();
+            if (food.active) {
+                food.draw();
+            }
             snake.draw();
             game.drawScore();
             game.drawMessage();
@@ -229,44 +215,33 @@ game = {
         }
     },
 
-    drawBox: function(x, y, size, color) {
+    drawBox: function (x, y, size, color) {
         if (color === 'rainbow') {
-            let gradient = context.createLinearGradient(x - size/2, y - size/2, x + size/2, y + size/2);
-            gradient.addColorStop(0, 'red');
-            gradient.addColorStop(0.2, 'orange');
-            gradient.addColorStop(0.4, 'yellow');
-            gradient.addColorStop(0.6, 'green');
-            gradient.addColorStop(0.8, 'blue');
-            gradient.addColorStop(1, 'violet');
-            context.fillStyle = gradient;
+            let g = context.createLinearGradient(x - size / 2, y - size / 2, x + size / 2, y + size / 2);
+            g.addColorStop(0, 'red'); g.addColorStop(0.2, 'orange');
+            g.addColorStop(0.4, 'yellow'); g.addColorStop(0.6, 'green');
+            g.addColorStop(0.8, 'blue'); g.addColorStop(1, 'violet');
+            context.fillStyle = g;
         } else {
             context.fillStyle = color;
         }
         context.beginPath();
-        context.arc(x, y, size/2, 0, Math.PI * 2);
+        context.arc(x, y, size / 2, 0, Math.PI * 2);
         context.fill();
-        
-        if (snake.tail.length > 0 && x === snake.tail[snake.tail.length-1].x + snake.size/2) {
-            context.fillStyle = 'black';
-            context.beginPath();
-            context.arc(x - size/4, y - size/4, size/8, 0, Math.PI * 2);
-            context.arc(x + size/4, y - size/4, size/8, 0, Math.PI * 2);
-            context.fill();
-        }
     },
 
-    drawScore: function() {
+    drawScore: function () {
         context.fillStyle = '#333';
         context.font = '20px Arial';
         context.textAlign = 'left';
         context.fillText('Skoor: ' + game.score, 10, 25);
         context.fillText('Raha: ' + game.money, 10, 50);
         context.fillText('Level: ' + game.level, 10, 75);
-        context.fillText('Rebirth Multiplier: x' + game.rebirthMultiplier.toFixed(1), 10, 100);
+        context.fillText('Rebirth x' + game.rebirthMultiplier.toFixed(1), 10, 100);
     },
 
-    drawMessage: function() {
-        if (game.message !== null) {
+    drawMessage: function () {
+        if (game.message) {
             context.fillStyle = '#333';
             context.strokeStyle = '#FFF';
             context.font = (canvas.height / 10) + 'px Arial';
@@ -276,118 +251,20 @@ game = {
         }
     },
 
-    resetCanvas: function() {
+    resetCanvas: function () {
         context.clearRect(0, 0, canvas.width, canvas.height);
-    },
-
-    shop: {
-        speedUpgrade: {
-            cost: 50,
-            level: 1,
-            maxLevel: 10,
-            buy: function() {
-                if (game.money >= this.cost && this.level < this.maxLevel) {
-                    game.money -= this.cost;
-                    game.upgrades.speed += 2;
-                    this.level++;
-                    this.cost = Math.floor(this.cost * 1.5);
-                    game.fps = 8 + game.upgrades.speed;
-                    updateShopDisplay();
-                    saveGame();
-                }
-            }
-        },
-        coinValueUpgrade: {
-            cost: 100,
-            level: 1,
-            maxLevel: 10,
-            buy: function() {
-                if (game.money >= this.cost && this.level < this.maxLevel) {
-                    game.money -= this.cost;
-                    game.upgrades.coinValue++;
-                    this.level++;
-                    this.cost = Math.floor(this.cost * 1.5);
-                    updateShopDisplay();
-                    saveGame();
-                }
-            }
-        },
-        pigSizeUpgrade: {
-            cost: 150,
-            level: 1,
-            maxLevel: 5,
-            buy: function() {
-                if (game.money >= this.cost && this.level < this.maxLevel) {
-                    game.money -= this.cost;
-                    game.upgrades.pigSize++;
-                    snake.size += 2;
-                    this.level++;
-                    this.cost = Math.floor(this.cost * 1.8);
-                    updateShopDisplay();
-                    saveGame();
-                }
-            }
-        },
-        luckUpgrade: {
-            cost: 200,
-            level: 1,
-            maxLevel: 5,
-            buy: function() {
-                if (game.money >= this.cost && this.level < this.maxLevel) {
-                    game.money -= this.cost;
-                    game.upgrades.luckLevel++;
-                    this.level++;
-                    this.cost = Math.floor(this.cost * 2);
-                    updateShopDisplay();
-                    saveGame();
-                }
-            }
-        },
-        magnetUpgrade: {
-            cost: 250,
-            level: 1,
-            maxLevel: 5,
-            buy: function() {
-                if (game.money >= this.cost && this.level < this.maxLevel) {
-                    game.money -= this.cost;
-                    game.upgrades.magnetLevel++;
-                    this.level++;
-                    this.cost = Math.floor(this.cost * 2);
-                    updateShopDisplay();
-                    saveGame();
-                }
-            }
-        },
-        multiplierUpgrade: {
-            cost: 300,
-            level: 1,
-            maxLevel: 5,
-            buy: function() {
-                if (game.money >= this.cost && this.level < this.maxLevel) {
-                    game.money -= this.cost;
-                    game.upgrades.multiplierLevel++;
-                    game.rebirthMultiplier += 0.1;
-                    this.level++;
-                    this.cost = Math.floor(this.cost * 2.5);
-                    updateShopDisplay();
-                    saveGame();
-                }
-            }
-        }
     }
 };
 
 snake = {
     size: 15,
-    x: 0,
-    y: 0,
-    dx: 15,
-    dy: 0,
+    x: 0, y: 0,
+    dx: 15, dy: 0,
     tail: [],
     maxTail: 3,
     color: game.selectedPigColor,
 
-    init: function() {
+    init() {
         this.x = canvas.width / 2;
         this.y = canvas.height / 2;
         this.dx = this.size;
@@ -396,68 +273,64 @@ snake = {
         this.maxTail = 3;
     },
 
-    move: function() {
+    move() {
         this.x += this.dx;
         this.y += this.dy;
 
-        if (game.upgrades.magnetLevel > 0) {
-            let magnetRange = game.upgrades.magnetLevel * 20;
-            let dx = food.x - this.x;
-            let dy = food.y - this.y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance < magnetRange) {
-                food.x -= (dx * 0.1);
-                food.y -= (dy * 0.1);
-                food.x = Math.max(0, Math.min(canvas.width - food.size, food.x));
-                food.y = Math.max(0, Math.min(canvas.height - food.size, food.y));
+        // Magneti loogika
+        if (game.upgrades.magnetLevel > 0 && food.active) {
+            let r = game.upgrades.magnetLevel * 20;
+            let dx = food.x - this.x, dy = food.y - this.y;
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < r) {
+                food.x -= dx * 0.1;
+                food.y -= dy * 0.1;
             }
         }
 
+        // Seina kontroll
         if (this.x < 0 || this.x >= canvas.width || this.y < 0 || this.y >= canvas.height) {
             game.stop();
             return;
         }
 
+        // Lisa uus positsioon saba massiivi
         this.tail.push({ x: this.x, y: this.y });
+        if (this.tail.length > this.maxTail) this.tail.shift();
 
-        while (this.tail.length > this.maxTail) {
-            this.tail.shift();
-        }
-
-        if (food.isCollision(this.x, this.y)) {
-            //game.createCoinParticles(this.x + this.size/2, this.y + this.size/2);
+        // Mündi korjamise kontroll
+        if (food.active && food.isCollision(this.x, this.y)) {
+            food.active = false;
             game.score++;
             game.money += 1 + game.upgrades.coinValue;
             game.totalCoins++;
             this.maxTail++;
-            food.set();
-            game.achievements.check();
+            
+            try {
+                game.achievements.check();
+            } catch (error) {
+                console.log("Achievement check error in move:", error);
+            }
+            
             updateStatistics();
+            
+            // Loo mündi efektid ja uus münt
+            game.createCoinParticles(food.x + food.size / 2, food.y + food.size / 2);
+            food.set();
         }
     },
 
-    draw: function() {
-        this.tail.forEach(part => {
-            game.drawBox(part.x + this.size/2, part.y + this.size/2, this.size + game.upgrades.pigSize * 2, this.color);
-        });
+    draw() {
+        this.tail.forEach(part =>
+            game.drawBox(part.x + this.size / 2, part.y + this.size / 2,
+                this.size + game.upgrades.pigSize * 2, this.color));
     },
 
-    changeDirection: function(direction) {
-        switch(direction) {
-            case 'left':
-                if (this.dx === 0) { this.dx = -this.size; this.dy = 0; }
-                break;
-            case 'up':
-                if (this.dy === 0) { this.dx = 0; this.dy = -this.size; }
-                break;
-            case 'right':
-                if (this.dx === 0) { this.dx = this.size; this.dy = 0; }
-                break;
-            case 'down':
-                if (this.dy === 0) { this.dx = 0; this.dy = this.size; }
-                break;
-        }
+    changeDirection(dir) {
+        if (dir === 'left' && this.dx === 0) { this.dx = -this.size; this.dy = 0; }
+        else if (dir === 'up' && this.dy === 0) { this.dx = 0; this.dy = -this.size; }
+        else if (dir === 'right' && this.dx === 0) { this.dx = this.size; this.dy = 0; }
+        else if (dir === 'down' && this.dy === 0) { this.dx = 0; this.dy = this.size; }
     }
 };
 
@@ -465,76 +338,84 @@ food = {
     x: 0,
     y: 0,
     size: 15,
+    active: true,
 
-    set: function() {
-        this.x = Math.floor(Math.random() * (canvas.width / this.size)) * this.size;
-        this.y = Math.floor(Math.random() * (canvas.height / this.size)) * this.size;
+    set() {
+        this.active = true;
+        // Arvuta uus positsioon ruudustiku põhiselt
+        let gridSize = this.size;
+        let maxX = Math.floor(canvas.width / gridSize);
+        let maxY = Math.floor(canvas.height / gridSize);
+        
+        let newX, newY;
+        let validPosition = false;
+        
+        while (!validPosition) {
+            newX = Math.floor(Math.random() * maxX) * gridSize;
+            newY = Math.floor(Math.random() * maxY) * gridSize;
+            
+            // Kontrolli, et uus positsioon ei kattuks ussiga
+            validPosition = true;
+            for (let part of snake.tail) {
+                if (Math.abs(part.x - newX) < gridSize && Math.abs(part.y - newY) < gridSize) {
+                    validPosition = false;
+                    break;
+                }
+            }
+            
+            // Kontrolli, et münt ei tekiks liiga lähedale ussi peale
+            if (Math.abs(snake.x - newX) < gridSize && Math.abs(snake.y - newY) < gridSize) {
+                validPosition = false;
+            }
+        }
+        
+        this.x = newX;
+        this.y = newY;
     },
 
-    draw: function() {
+    draw() {
+        if (!this.active) return;
+        
+        // Mündi joonistamine
         context.beginPath();
-        context.arc(this.x + this.size/2, this.y + this.size/2, this.size/2, 0, Math.PI * 2);
+        context.arc(this.x + this.size / 2, this.y + this.size / 2, this.size / 2, 0, Math.PI * 2);
         context.fillStyle = '#FFD700';
         context.fill();
         
+        // Mündi läike joonistamine
         context.beginPath();
-        context.arc(this.x + this.size/3, this.y + this.size/3, this.size/6, 0, Math.PI * 2);
+        context.arc(this.x + this.size / 3, this.y + this.size / 3, this.size / 6, 0, Math.PI * 2);
         context.fillStyle = '#FFFFFF';
         context.fill();
         
+        // Euro sümboli joonistamine
         context.fillStyle = '#B8860B';
         context.font = `${this.size}px Arial`;
         context.textAlign = 'center';
         context.textBaseline = 'middle';
-        context.fillText('€', this.x + this.size/2, this.y + this.size/2);
+        context.fillText('€', this.x + this.size / 2, this.y + this.size / 2);
     },
 
-    isCollision: function(x, y) {
-        let pigX = x + snake.size/2;
-        let pigY = y + snake.size/2;
-        let coinX = this.x + this.size/2;
-        let coinY = this.y + this.size/2;
+    isCollision(x, y) {
+        if (!this.active) return false;
         
-        let distance = Math.sqrt(
-            Math.pow(pigX - coinX, 2) + 
-            Math.pow(pigY - coinY, 2)
-        );
-        
-        return distance < snake.size;
+        let dx = (x + snake.size / 2) - (this.x + this.size / 2);
+        let dy = (y + snake.size / 2) - (this.y + this.size / 2);
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < (snake.size + this.size) / 2;
     }
 };
 
-window.addEventListener('keydown', function(e) {
-    if (game.over && (e.key === 'k' || e.key === 'K')) {
-        game.start();
-        return;
-    }
+
+window.addEventListener('keydown', function (e) {
+    if (game.over && (e.key === 'k' || e.key === 'K')) return game.start();
 
     if (!game.over) {
-        switch(e.key) {
-            case 'ArrowLeft':
-            case 'a':
-            case 'A':
-                snake.changeDirection('left');
-                break;
-            case 'ArrowUp':
-            case 'w':
-            case 'W':
-                snake.changeDirection('up');
-                break;
-            case 'ArrowRight':
-            case 'd':
-            case 'D':
-                snake.changeDirection('right');
-                break;
-            case 'ArrowDown':
-            case 's':
-            case 'S':
-                snake.changeDirection('down');
-                break;
+        switch (e.key.toLowerCase()) {
+            case 'a': case 'arrowleft': snake.changeDirection('left'); break;
+            case 'w': case 'arrowup': snake.changeDirection('up'); break;
+            case 'd': case 'arrowright': snake.changeDirection('right'); break;
+            case 's': case 'arrowdown': snake.changeDirection('down'); break;
         }
     }
 });
-
-updateShopDisplay();
-updateStatistics();
