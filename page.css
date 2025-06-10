@@ -308,3 +308,63 @@ button:disabled {
         grid-template-columns: 1fr;
     }
 }
+
+/* Color options in shop */
+.color-shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.color-option {
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    background: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.color-option:hover {
+    transform: scale(1.05);
+}
+
+.color-option h4 {
+    margin-bottom: 5px;
+    color: #2c3e50;
+}
+
+.color-option p {
+    font-size: 0.9em;
+    color: #7f8c8d;
+    margin-bottom: 10px;
+}
+
+.color-option button {
+    padding: 8px 12px;
+    font-size: 0.8em;
+    margin-top: 5px;
+}
+
+/* Achievement styles */
+.achievement.unlocked {
+    background: linear-gradient(145deg, #e8f8f5, #d1f2eb);
+    border-left: 4px solid #2ecc71;
+}
+
+.achievement .reward {
+    color: #27ae60;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+/* Rebirth button */
+.rebirth-button {
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    margin-top: 15px;
+}
+
+.rebirth-button:hover {
+    background: linear-gradient(135deg, #8e44ad, #7d3c98);
+}
